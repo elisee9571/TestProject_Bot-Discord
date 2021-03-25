@@ -230,4 +230,4 @@ async def roulette(ctx):
     await ctx.send("**" + loser.name + "**" + " !")
 
 #Token of bot
-bot.run("ODI0NjI2MDIxMDMwNDI4Njgy.YFyG1A.FutmIh21QX-P8ItR1fO6A_mgtNk")
+bot.run("")
