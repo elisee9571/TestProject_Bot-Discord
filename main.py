@@ -39,7 +39,7 @@ async def start(ctx, secondes=3):
 
 #id of Owner
 def isOwner(ctx):
-    return ctx.message.author.id == 323776561998331914 or 500678449762140170
+    return ctx.message.author.id == ... or ... #put your id
 
 #command private
 @bot.command()
