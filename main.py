@@ -3,6 +3,11 @@ from discord.ext import commands, tasks
 import asyncio
 import random
 import datetime
+#import file for commands
+import info
+import private
+import ban
+import kick
 
 bot = commands.Bot(command_prefix = "!", description = "Bot de Hanki")
 funFact = ["L'eau mouille",
@@ -21,14 +26,23 @@ funFact = ["L'eau mouille",
             "Pourquoi vous lisez ?",
             "!help"]
 
+TOKEN = ""
+
+def command_channel(ctx):
+    return ctx.message.channel.id == 825095623569047633
+
+def mute_channel(ctx):
+        return ctx.message.channel.id == 825094246201557023
+
 #bot ready
 @bot.event
 async def on_ready():
-    print("Let's go !")
+    print("Ready !")
     status.start()
 
 #background task of bot
 @tasks.loop(seconds=5)
+@commands.check(command_channel)
 async def status():
     game = discord.Game(random.choice(funFact))
     await bot.change_presence(status=discord.Status.dnd, activity=game)
@@ -37,49 +51,30 @@ async def status():
 async def start(ctx, secondes=3):
     status.change_interval(seconds=secondes)
 
-#id of Owner
-def isOwner(ctx):
-    return ctx.message.author.id == 323776561998331914 or 500678449762140170
-
-#command private
-@bot.command()
-@commands.check(isOwner)
-async def private(ctx):
-    await ctx.send("Cette command est seulement pour les fondateurs de Copx !!!")
+#manage errors
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send("Cette commande n'existe pas. \nTappe !help pour consulter les commandes.")
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Il manque un argument. Des chiffres ou un mot !")
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("Vous n'avez pas les permissions pour cette commande. \nEcrit !help pour voir vos commandes.")
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send("Oups, vous ne pouvez pas utilisez cette commande ici !")
+    if isinstance(error.original, discord.Forbidden):#error, commands.BotMissingPermissions
+        await ctx.send("Oups, je n'est pas les permissions pour ceci")
 
 #bot ping pong for test
 @bot.command()
+@commands.check(command_channel)
 async def ping(ctx):
     #ctx = context
     await ctx.send("Pong !")
 
-#info Server, all info
-@bot.command()
-async def severisnfo(ctx):
-    server = ctx.guild
-    numberTextChannels = len(server.text_channels)
-    numberVoiceChannels = len(server.voice_channels)
-    description = server.description
-    numberPerson = server.member_count
-    serverName = server.name
-    message = f"Le serveur **{serverName}** contient **{numberPerson}** personnes. \nLa description du serveur est **{description}**. \nCe serveur possède **{numberTextChannels}** salons textuels et **{numberVoiceChannels}** salons vocaux."
-    await ctx.send(message)
-
-#info Server, await info
-@bot.command()
-async def getinfo(ctx, info):
-    server = ctx.guild
-    if info == "memberCount":
-        await ctx.send(server.member_count)
-    elif info == "numberChannels":
-        await ctx.send(len(server.text_channels) + len(server.voice_channels))
-    elif info == "name":
-        await ctx.send(server.name)
-    else:
-        await ctx.send("Etrange... Je ne connais pas cela")
-
 #Bot say = dit
 @bot.command()
+@commands.check(command_channel)
 async def say(ctx,*texte):
     await ctx.send(" ".join(texte))
 
@@ -90,53 +85,6 @@ async def clear(ctx, number : int):
     messages = await ctx.channel.history(limit = number + 1).flatten()
     for message in messages:
         await message.delete()
-
-#bot kick user with permission kick_members under from embed
-@bot.command()
-@commands.has_permissions(kick_members=True)
-async def kick(ctx, user : discord.User, *, reason="Aucune raison n'a été donnée"):
-    #await ctx.guild.kick(user, reason = reason)
-    embed = discord.Embed(title="**Kick**", description="Un modérateur est chaud !", url="https://github.com/elisee9571/Bot-Discord", color=0x2ECC71)
-    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-    embed.set_thumbnail(url="https://avatars.githubusercontent.com/u/36101493?s=200&v=4")
-    embed.add_field(name="Membre kick", value=user.name, inline=False)
-    embed.add_field(name="Raison", value=reason, inline=True)
-    embed.add_field(name="Modérateur", value=ctx.author.name, inline=True)
-    embed.timestamp = datetime.datetime.utcnow()
-    embed.set_footer(text='Bot Python Test', icon_url="https://avatars.githubusercontent.com/u/36101493?s=200&v=4")
-    
-    await ctx.send(embed = embed)
-
-#bot ban user with permission ban_members under form embed
-@bot.command()
-@commands.has_permissions(ban_members=True)
-async def ban(ctx, user : discord.User, *, reason="Aucune raison n'a été donnée"):
-    #await ctx.guild.ban(user, reason = reason)
-    embed = discord.Embed(title="**Banissement**", description="Un modérateur a frappé !", url="https://github.com/elisee9571/Bot-Discord", color=0x6844ff)
-    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-    embed.set_thumbnail(url="https://avatars.githubusercontent.com/u/36101493?s=200&v=4")
-    embed.add_field(name="Membre banni", value=user.name, inline=False)
-    embed.add_field(name="Raison", value=reason, inline=True)
-    embed.add_field(name="Modérateur", value=ctx.author.name, inline=True)
-    embed.timestamp = datetime.datetime.utcnow()
-    embed.set_footer(text='Bot Python Test', icon_url="https://avatars.githubusercontent.com/u/36101493?s=200&v=4")
-    
-    await ctx.send(embed = embed)
-
-#bot unban user
-@bot.command()
-@commands.has_permissions(ban_members=True)
-async def unban(ctx, user, *reason):
-    reason = " ".join(reason)
-    userName, userId = user.split("#")
-    bannedUsers = await ctx.guild.bans()
-    for i in bannedUsers:
-        if i.user.name == userName and i.user.discriminator == userId:
-            await ctx.guild.unban(i.user, reason = reason)
-            await ctx.send(f"**{user}** a été unban.")
-            return
-    #user not found
-    await ctx.send(f"L'utilisateur **{user}** n'est pas dans la liste des bans ! ")
 
 #bot create muted role
 async def createMutedRole(ctx):
@@ -172,6 +120,7 @@ async def unmute(ctx, member : discord.Member, *, reason="Aucune raison n'a ét�
 
 #bot await messages and react
 @bot.command()
+@commands.check(command_channel)
 async def cuisiner(ctx):
     await ctx.send("Quelle plat voulez-vous faire ?")
     def checkMessage(message):
@@ -197,6 +146,7 @@ async def cuisiner(ctx):
 
 #roulette game
 @bot.command()
+@commands.check(command_channel)
 async def roulette(ctx):
     await ctx.send("La roulette commencera dans 10 secondes. \nEnvoyer \"moi\" dans ce channel pour y participer.")
 
@@ -229,5 +179,9 @@ async def roulette(ctx):
     await asyncio.sleep(1)
     await ctx.send("**" + loser.name + "**" + " !")
 
+bot.add_cog(info.InfoOwner(bot))
+bot.add_cog(ban.BanOwner(bot))
+bot.add_cog(kick.KickOwner(bot))
+bot.add_cog(private.PrivateOwner(bot))
 #Token of bot
-bot.run("ODI0NjI2MDIxMDMwNDI4Njgy.YFyG1A.FutmIh21QX-P8ItR1fO6A_mgtNk")
+bot.run(TOKEN)
