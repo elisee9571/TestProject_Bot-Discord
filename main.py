@@ -51,6 +51,7 @@ async def status():
 async def start(ctx, secondes=3):
     status.change_interval(seconds=secondes)
 
+<<<<<<< HEAD
 #manage errors
 @bot.event
 async def on_command_error(ctx, error):
@@ -64,6 +65,17 @@ async def on_command_error(ctx, error):
         await ctx.send("Oups, vous ne pouvez pas utilisez cette commande ici !")
     if isinstance(error.original, discord.Forbidden):#error, commands.BotMissingPermissions
         await ctx.send("Oups, je n'est pas les permissions pour ceci")
+=======
+#id of Owner
+def isOwner(ctx):
+    return ctx.message.author.id == ... or ... #put your id
+
+#command private
+@bot.command()
+@commands.check(isOwner)
+async def private(ctx):
+    await ctx.send("Cette command est seulement pour les fondateurs de Copx !!!")
+>>>>>>> cd13f2ea2561308e79e940819c7f0d9a22369f1c
 
 #bot ping pong for test
 @bot.command()
@@ -184,4 +196,8 @@ bot.add_cog(ban.BanOwner(bot))
 bot.add_cog(kick.KickOwner(bot))
 bot.add_cog(private.PrivateOwner(bot))
 #Token of bot
+<<<<<<< HEAD
 bot.run(TOKEN)
+=======
+bot.run("")
+>>>>>>> cd13f2ea2561308e79e940819c7f0d9a22369f1c
